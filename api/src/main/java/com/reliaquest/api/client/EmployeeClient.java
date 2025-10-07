@@ -28,7 +28,6 @@ public class EmployeeClient {
   private final RateLimiter rateLimiter;
 
   private static final String BASE_PATH = "/api/v1/employee";
-  private static final Set<Integer> TRANSIENT_CODES = Set.of(429, 502, 503, 504);
 
   public EmployeeClient(
       RestClient restClient,
@@ -133,37 +132,6 @@ public class EmployeeClient {
     return decorateResilience(supplier).get();
   }
 
-  public Optional<Employee> updateEmployee(String id, CreateEmployeeInput input) {
-    if (id == null || id.isBlank() || input == null) {
-      log.warn("Cannot update employee: id or input is invalid");
-      return Optional.empty();
-    }
-
-    Supplier<Optional<Employee>> supplier =
-        () -> {
-          try {
-            ApiResponse<Employee> response =
-                restClient
-                    .put()
-                    .uri(BASE_PATH + "/{id}", id)
-                    .body(input)
-                    .retrieve()
-                    .body(new ParameterizedTypeReference<>() {});
-            if (response == null || response.data() == null) {
-              log.warn("Failed to update employee {} (empty response)", id);
-              return Optional.empty();
-            }
-            return Optional.of(response.data());
-          } catch (RestClientResponseException e) {
-            return handleRestErrorOptional(e, "updateEmployee", id);
-          } catch (Exception e) {
-            log.error("Unhandled error updating employee {}: {}", id, e.toString());
-            return Optional.empty();
-          }
-        };
-    return decorateResilience(supplier).get();
-  }
-
   public boolean deleteEmployee(String id) {
     if (id == null || id.isBlank()) {
       log.warn("Cannot delete employee: id is null or blank");
@@ -239,20 +207,6 @@ public class EmployeeClient {
     }
     log.error("Delete-by-name error for {}: {} – {}", name, e.getRawStatusCode(), e.getMessage());
     return false;
-  }
-
-  private Optional<Employee> handleRestErrorOptional(RestClientResponseException e, String method) {
-    HttpStatus status = HttpStatus.resolve(e.getRawStatusCode());
-    if (status == HttpStatus.NOT_FOUND) {
-      log.warn("{}: Resource not found (404)", method);
-      return Optional.empty();
-    }
-    if (status == HttpStatus.TOO_MANY_REQUESTS || status == HttpStatus.SERVICE_UNAVAILABLE) {
-      log.warn("{}: Transient error ({}), will trigger retry", method, status);
-      throw e;
-    }
-    log.error("Non-retryable error in {}: {} – {}", method, e.getRawStatusCode(), e.getMessage());
-    return Optional.empty();
   }
 
   private List<Employee> handleRestErrorList(RestClientResponseException e, String method) {

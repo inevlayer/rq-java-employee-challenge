@@ -79,6 +79,17 @@ public class GlobalExceptionHandler {
         .body(ApiResponse.error("Upstream error: " + ex.getStatusText()));
   }
 
+  @ExceptionHandler({
+    io.github.resilience4j.circuitbreaker.CallNotPermittedException.class,
+    java.util.concurrent.TimeoutException.class,
+    java.net.ConnectException.class
+  })
+  public ResponseEntity<ApiResponse<Void>> handleServiceUnavailable(Exception ex) {
+    log.error("Service unavailable: {}", ex.getMessage());
+    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+        .body(ApiResponse.error("Service temporarily unavailable"));
+  }
+
   /** Handle all other unexpected exceptions - 500 Internal Server Error */
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {

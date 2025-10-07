@@ -95,7 +95,7 @@ public class EmployeeController implements IEmployeeController<Employee, CreateE
   public ResponseEntity<String> deleteEmployeeById(
       @Parameter(description = "Employee ID or name", required = true) @PathVariable String id) {
     return employeeService
-        .deleteEmployeeByName(id)
+        .deleteEmployeeByIdOrName(id)
         .map(name -> ResponseEntity.ok("Successfully deleted employee: " + name))
         .orElseThrow(() -> new NoSuchElementException("Employee not found: " + id));
   }

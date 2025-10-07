@@ -52,7 +52,6 @@ public class EmployeeService {
           "Using cached employee list ({} entries)",
           cachedEmployees != null ? cachedEmployees.size() : 0);
     }
-    // Return defensive copy to prevent external modification and handle null case
     return cachedEmployees != null ? new ArrayList<>(cachedEmployees) : Collections.emptyList();
   }
 
@@ -127,25 +126,6 @@ public class EmployeeService {
     return Optional.empty();
   }
 
-  public Optional<String> deleteEmployeeByName(String name) {
-    if (name == null || name.isBlank()) {
-      log.warn("Cannot delete employee: name is null or blank");
-      return Optional.empty();
-    }
-    try {
-      boolean deleted = employeeClient.deleteEmployeeByName(name);
-      if (deleted) {
-        log.debug("Deleted employee: {}", name);
-        invalidateCache();
-        return Optional.of(name);
-      }
-      log.warn("Employee not found or could not be deleted: {}", name);
-    } catch (Exception e) {
-      log.error("Error deleting employee {}: {}", name, e.getMessage());
-    }
-    return Optional.empty();
-  }
-
   /**
    * Delete employee by ID or name. If the parameter looks like a UUID, fetch the employee first to
    * get their name. Otherwise, treat it as a name and delete directly.
@@ -178,6 +158,25 @@ public class EmployeeService {
       log.debug("Parameter treated as name: {}", idOrName);
       return deleteEmployeeByName(idOrName);
     }
+  }
+
+  public Optional<String> deleteEmployeeByName(String name) {
+    if (name == null || name.isBlank()) {
+      log.warn("Cannot delete employee: name is null or blank");
+      return Optional.empty();
+    }
+    try {
+      boolean deleted = employeeClient.deleteEmployeeByName(name);
+      if (deleted) {
+        log.debug("Deleted employee: {}", name);
+        invalidateCache();
+        return Optional.of(name);
+      }
+      log.warn("Employee not found or could not be deleted: {}", name);
+    } catch (Exception e) {
+      log.error("Error deleting employee {}: {}", name, e.getMessage());
+    }
+    return Optional.empty();
   }
 
   private boolean isValidUUID(String str) {

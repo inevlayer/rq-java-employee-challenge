@@ -41,7 +41,6 @@ class EmployeeServiceTest {
             new Employee(UUID.randomUUID(), "Bob", 3200, 31, "Sales Engineer", "bob@company.com"));
     when(employeeClient.getAllEmployees()).thenReturn(employees);
 
-    // Don't recreate the service - use the one from setUp()
     List<Employee> result = employeeService.getAllEmployees();
 
     assertEquals(employees.size(), result.size());
@@ -62,7 +61,6 @@ class EmployeeServiceTest {
 
     verify(employeeClient, times(1)).getAllEmployees();
 
-    // FIXED: Use isEqualTo instead of isSameAs because we return defensive copies
     assertThat(first).isEqualTo(second);
     assertThat(first).containsExactlyElementsOf(second);
   }
@@ -84,7 +82,7 @@ class EmployeeServiceTest {
         new Employee(UUID.randomUUID(), "Jamie", 2000, 35, "Mgr", "jamie@company.com");
     when(employeeClient.createEmployee(any())).thenReturn(Optional.of(newEmployee));
 
-    // Prime cache
+    // Prime the cache
     employeeService.getAllEmployeesCached();
     verify(employeeClient, times(1)).getAllEmployees();
 
@@ -104,11 +102,9 @@ class EmployeeServiceTest {
     when(employeeClient.getAllEmployees()).thenReturn(employees);
     when(employeeClient.deleteEmployeeByName("John")).thenReturn(true);
 
-    // Prime cache
     employeeService.getAllEmployeesCached();
     verify(employeeClient, times(1)).getAllEmployees();
 
-    // Delete employee - should invalidate cache
     employeeService.deleteEmployeeByName("John");
 
     // Should trigger re-fetch

@@ -113,7 +113,7 @@ public class EmployeeBeansConfig {
     RateLimiterConfig rlConfig =
         RateLimiterConfig.custom()
             .limitRefreshPeriod(Duration.ofSeconds(1))
-            .limitForPeriod(3) //  3 calls per second ( under mock server's 5-10 limit)
+            .limitForPeriod(3) //  3 calls per second
             .timeoutDuration(Duration.ofMillis(500))
             .build();
 

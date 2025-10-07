@@ -7,7 +7,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class ApiModelTests {
-
   private final ObjectMapper mapper = new ObjectMapper();
 
   @Test
@@ -32,7 +31,7 @@ class ApiModelTests {
             .employeeSalary(1000)
             .employeeAge(30)
             .employeeTitle("Engineer")
-            .employeeEmail("alice@example.com")
+            .employeeEmail("alice@company.com")
             .build();
 
     String json = mapper.writeValueAsString(employee);

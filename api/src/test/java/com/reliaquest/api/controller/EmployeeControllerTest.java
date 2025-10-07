@@ -22,6 +22,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.client.RestClientResponseException;
 
 @WebMvcTest(controllers = EmployeeController.class)
 class EmployeeControllerTest {
@@ -111,13 +112,13 @@ class EmployeeControllerTest {
 
     String body =
         """
-        {
-          "name": "Jane Doe",
-          "age": 30,
-          "salary": 120000,
-          "title": "Software Engineer"
-        }
-        """;
+                        {
+                          "name": "Jane Doe",
+                          "age": 30,
+                          "salary": 120000,
+                          "title": "Software Engineer"
+                        }
+                        """;
 
     mockMvc
         .perform(post("/api/v1/employee").contentType(MediaType.APPLICATION_JSON).content(body))
@@ -128,11 +129,12 @@ class EmployeeControllerTest {
 
   @Test
   void createEmployee_ShouldReturn400_WhenMissingRequiredFields() throws Exception {
-    String body = """
-        {
-          "name": "Jane Doe"
-        }
-        """;
+    String body =
+        """
+                {
+                  "name": "Jane Doe"
+                }
+                """;
 
     mockMvc
         .perform(post("/api/v1/employee").contentType(MediaType.APPLICATION_JSON).content(body))
@@ -143,13 +145,13 @@ class EmployeeControllerTest {
   void createEmployee_ShouldReturn400_WhenInvalidAge() throws Exception {
     String body =
         """
-        {
-          "name": "Jane Doe",
-          "age": 15,
-          "salary": 120000,
-          "title": "Software Engineer"
-        }
-        """;
+                        {
+                          "name": "Jane Doe",
+                          "age": 15,
+                          "salary": 120000,
+                          "title": "Software Engineer"
+                        }
+                        """;
 
     mockMvc
         .perform(post("/api/v1/employee").contentType(MediaType.APPLICATION_JSON).content(body))
@@ -160,13 +162,13 @@ class EmployeeControllerTest {
   void createEmployee_ShouldReturn400_WhenInvalidSalary() throws Exception {
     String body =
         """
-        {
-          "name": "Jane Doe",
-          "age": 30,
-          "salary": -1000,
-          "title": "Software Engineer"
-        }
-        """;
+                        {
+                          "name": "Jane Doe",
+                          "age": 30,
+                          "salary": -1000,
+                          "title": "Software Engineer"
+                        }
+                        """;
 
     mockMvc
         .perform(post("/api/v1/employee").contentType(MediaType.APPLICATION_JSON).content(body))
@@ -177,13 +179,13 @@ class EmployeeControllerTest {
   void createEmployee_ShouldReturn400_WhenBlankName() throws Exception {
     String body =
         """
-        {
-          "name": "",
-          "age": 30,
-          "salary": 120000,
-          "title": "Software Engineer"
-        }
-        """;
+                        {
+                          "name": "",
+                          "age": 30,
+                          "salary": 120000,
+                          "title": "Software Engineer"
+                        }
+                        """;
 
     mockMvc
         .perform(post("/api/v1/employee").contentType(MediaType.APPLICATION_JSON).content(body))
@@ -197,13 +199,13 @@ class EmployeeControllerTest {
 
     String body =
         """
-        {
-          "name": "Jane Doe",
-          "age": 30,
-          "salary": 120000,
-          "title": "Software Engineer"
-        }
-        """;
+                        {
+                          "name": "Jane Doe",
+                          "age": 30,
+                          "salary": 120000,
+                          "title": "Software Engineer"
+                        }
+                        """;
 
     mockMvc
         .perform(post("/api/v1/employee").contentType(MediaType.APPLICATION_JSON).content(body))
@@ -252,30 +254,34 @@ class EmployeeControllerTest {
   }
 
   @Test
-  void deleteEmployeeById_ShouldReturnOk_WhenDeleted() throws Exception {
+  void deleteEmployeeById_ShouldReturnOk_WhenDeletedSimple() throws Exception {
     String employeeName = "Jane Doe";
 
-    // If using deleteEmployeeByIdOrName, mock both methods
     Mockito.when(employeeService.deleteEmployeeByIdOrName(eq(ID)))
-        .thenReturn(Optional.of(employeeName));
-
-    // Fallback: if still using old method
-    Mockito.when(employeeService.deleteEmployeeByName(eq(ID)))
         .thenReturn(Optional.of(employeeName));
 
     mockMvc
         .perform(delete("/api/v1/employee/" + ID))
         .andExpect(status().isOk())
-        .andExpect(content().string(containsString("deleted"))); // Match the actual response format
+        .andExpect(content().string(containsString("deleted")));
+  }
+
+  @Test
+  void deleteEmployeeById_ShouldReturnOk_WhenDeleted() throws Exception {
+    String employeeName = "Jane Doe";
+
+    Mockito.when(employeeService.deleteEmployeeByIdOrName(eq(ID)))
+        .thenReturn(Optional.of(employeeName));
+
+    mockMvc
+        .perform(delete("/api/v1/employee/" + ID))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("deleted")));
   }
 
   @Test
   void deleteEmployeeById_ShouldReturn404_WhenNotFound() throws Exception {
-    // Mock both methods for compatibility
     Mockito.when(employeeService.deleteEmployeeByIdOrName(eq("nonexistent")))
-        .thenReturn(Optional.empty());
-
-    Mockito.when(employeeService.deleteEmployeeByName(eq("nonexistent")))
         .thenReturn(Optional.empty());
 
     mockMvc.perform(delete("/api/v1/employee/nonexistent")).andExpect(status().isNotFound());
@@ -283,11 +289,7 @@ class EmployeeControllerTest {
 
   @Test
   void deleteEmployeeById_ShouldHandleServiceException() throws Exception {
-    // Mock both methods to throw exception
     Mockito.when(employeeService.deleteEmployeeByIdOrName(any()))
-        .thenThrow(new RuntimeException("Service error"));
-
-    Mockito.when(employeeService.deleteEmployeeByName(any()))
         .thenThrow(new RuntimeException("Service error"));
 
     mockMvc.perform(delete("/api/v1/employee/" + ID)).andExpect(status().isInternalServerError());
@@ -296,7 +298,9 @@ class EmployeeControllerTest {
   @Test
   void getAllEmployees_ShouldHandleServiceException() throws Exception {
     Mockito.when(employeeService.getAllEmployees())
-        .thenThrow(new RuntimeException("Service error"));
+        .thenThrow(
+            new RestClientResponseException(
+                "Service error", 503, "Service Unavailable", null, null, null));
 
     mockMvc.perform(get("/api/v1/employee")).andExpect(status().isServiceUnavailable());
   }
