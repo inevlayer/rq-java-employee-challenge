@@ -1,0 +1,29 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      employeeClientCircuit:
+        sliding-window-size: 2
+        minimum-number-of-calls: 2
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 300ms
+        permitted-number-of-calls-in-half-open-state: 1
+        automatic-transition-from-open-to-half-open-enabled: true
+        register-health-indicator: false
+
+  retry:
+    instances:
+      employeeClientRetry:
+        max-attempts: 3
+        wait-duration: 50ms
+
+  ratelimiter:
+    instances:
+      employeeClientLimiter:
+        limit-for-period: 50
+        limit-refresh-period: 100ms
+
+

@@ -1,2 +1,124 @@
-spring.application.name: employee-api
-server.port: 8111
+#spring:
+#  application:
+#    name: employee-api
+#  springdoc:
+#    api-docs:
+#      enabled: true
+#      path: /v3/api-docs
+#      resolve-schema-properties: true
+#    swagger-ui:
+#      enabled: true
+#      path: /swagger-ui.html
+#    show-actuator: true
+#
+#server:
+#  port: 8111
+#
+## R4J config to match mock server’s pattern - 5–10 random 429s, 30–90s backoff
+#resilience4j:
+#  retry:
+#    instances:
+#      employeeClientRetry:
+#        max-attempts: 3
+#        wait-duration: 2s
+#        retry-exceptions:
+#          - org.springframework.web.reactive.function.client.WebClientResponseException$TooManyRequests
+#          - org.springframework.web.reactive.function.client.WebClientResponseException$ServiceUnavailable
+#          - org.springframework.web.reactive.function.client.WebClientResponseException$GatewayTimeout
+#          - org.springframework.web.reactive.function.client.WebClientResponseException$BadGateway
+#          - java.io.IOException
+#        enable-exponential-backoff: true
+#        exponential-backoff-multiplier: 2
+#
+#  ratelimiter:
+#    instances:
+#      employeeClientLimiter:
+#        limit-for-period: 5
+#        limit-refresh-period: 10s
+#        timeout-duration: 1s
+#
+#  circuitbreaker:
+#    instances:
+#      employeeClientCircuit:
+#        sliding-window-size: 10
+#        minimum-number-of-calls: 5
+#        failure-rate-threshold: 50
+#        wait-duration-in-open-state: 30s
+spring:
+  application:
+    name: employee-api
+  springdoc:
+    api-docs:
+      enabled: true
+      path: /v3/api-docs
+      resolve-schema-properties: true
+    swagger-ui:
+      enabled: true
+      path: /swagger-ui.html
+    show-actuator: true
+
+server:
+  port: 8111
+
+# Resilience4j configuration optimized for the mock server's behavior
+resilience4j:
+  retry:
+    instances:
+      employeeClientRetry:
+        max-attempts: 3
+        wait-duration: 2s
+        # Fixed: Use RestClient exceptions, not WebClient
+        retry-exceptions:
+          - org.springframework.web.client.RestClientResponseException
+          - java.io.IOException
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+
+  ratelimiter:
+    instances:
+      employeeClientLimiter:
+        # Conservative: stay well under mock server's 5-10 request limit
+        limit-for-period: 3
+        limit-refresh-period: 1s
+        timeout-duration: 500ms
+
+  circuitbreaker:
+    instances:
+      employeeClientCircuit:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        slow-call-duration-threshold: 2s
+        slow-call-rate-threshold: 50
+        permitted-number-of-calls-in-half-open-state: 2
+
+management:
+  management:
+    tracing:
+      sampling:
+        probability: 1.0
+    metrics:
+      export:
+        prometheus:
+          enabled: true
+    health:
+      circuitbreakers:
+        enabled: true
+    zipkin:
+      tracing:
+        endpoint: http://localhost:9411/api/v2/spans
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    tags:
+      application: employee-api
+
+logging:
+  level:
+    com.project.api: DEBUG
+    org.springdoc: DEBUG
+    org.springframework.web: DEBUG
+logging.level.com.user.api.config.EmployeeBeansConfig: DEBUG
