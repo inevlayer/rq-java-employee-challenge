@@ -114,9 +114,9 @@ public class EmployeeService {
     try {
       Optional<Employee> createdOpt = employeeClient.createEmployee(input);
       if (createdOpt.isPresent()) {
+        invalidateCache(); // invalidate immediately
         Employee created = createdOpt.get();
         log.info("Created new employee: {}", created.getEmployeeName());
-        invalidateCache();
         return createdOpt;
       }
       log.warn("Employee creation returned empty result");
@@ -168,8 +168,8 @@ public class EmployeeService {
     try {
       boolean deleted = employeeClient.deleteEmployeeByName(name);
       if (deleted) {
+        invalidateCache(); // invalidate immediately - do not allow stale reads!
         log.debug("Deleted employee: {}", name);
-        invalidateCache();
         return Optional.of(name);
       }
       log.warn("Employee not found or could not be deleted: {}", name);
