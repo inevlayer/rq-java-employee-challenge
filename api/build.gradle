@@ -1,5 +1,7 @@
 plugins {
     id 'project-conventions'
+    id 'jacoco'
+    id 'com.github.spotbugs' version '6.0.7'
 }
 
 java {
@@ -22,6 +24,7 @@ dependencies {
     testImplementation 'com.squareup.okhttp3:okhttp:4.12.0'
     testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testImplementation 'org.mockito:mockito-core:5.12.0'
     testImplementation 'org.assertj:assertj-core:3.26.0'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.projectlombok:lombok:1.18.22'
@@ -34,4 +37,71 @@ springBoot {
 test {
     useJUnitPlatform()
     systemProperty 'junit.jupiter.execution.parallel.enabled', 'false'
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    '**/model/**',
+                    '**/config/**',
+                    '**/ApiApplication.class'
+            ])
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn test
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.80
+            }
+        }
+    }
+}
+
+check.dependsOn jacocoTestCoverageVerification
+
+spotbugs {
+    toolVersion.set("4.8.3")
+    ignoreFailures.set(false)
+    showProgress.set(true)
+}
+
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
+    effort.set(com.github.spotbugs.snom.Effort.valueOf('MAX'))
+    reportLevel.set(com.github.spotbugs.snom.Confidence.valueOf('HIGH'))
+    reports {
+        html.required.set(true)
+        xml.required.set(false)
+    }
+}
+
+tasks.named('spotbugsMain') {
+    reports {
+        html {
+            required.set(true)
+            outputLocation.set(file("${buildDir}/reports/spotbugs/main/spotbugs.html"))
+        }
+        xml.required.set(false)
+    }
+}
+
+tasks.named('spotbugsTest') {
+    reports {
+        html {
+            required.set(true)
+            outputLocation.set(file("${buildDir}/reports/spotbugs/test/spotbugs.html"))
+        }
+        xml.required.set(false)
+    }
 }

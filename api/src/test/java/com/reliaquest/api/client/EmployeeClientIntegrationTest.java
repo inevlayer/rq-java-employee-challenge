@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import okhttp3.mockwebserver.SocketPolicy;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -78,20 +79,20 @@ class EmployeeClientIntegrationTest {
   void getAllEmployees_returnsList() throws Exception {
     String jsonBody =
         """
-            {
-              "data": [
-                {
-                  "id": "33333333-3333-3333-3333-333333333333",
-                  "employee_name": "Alice",
-                  "employee_salary": 9000,
-                  "employee_age": 35,
-                  "employee_title": "Architect",
-                  "employee_email": "alice@company.com"
-                }
-              ],
-              "status": "success"
-            }
-            """;
+                        {
+                          "data": [
+                            {
+                              "id": "33333333-3333-3333-3333-333333333333",
+                              "employee_name": "Alice",
+                              "employee_salary": 9000,
+                              "employee_age": 35,
+                              "employee_title": "Architect",
+                              "employee_email": "alice@company.com"
+                            }
+                          ],
+                          "status": "success"
+                        }
+                        """;
 
     mockServer.enqueue(
         new MockResponse()
@@ -124,9 +125,10 @@ class EmployeeClientIntegrationTest {
     mockServer.enqueue(
         new MockResponse()
             .setResponseCode(200)
-            .setBody("""
-                { "data": [], "status": "success" }
-                """)
+            .setBody(
+                """
+                                { "data": [], "status": "success" }
+                                """)
             .addHeader("Content-Type", "application/json"));
 
     List<Employee> employees = employeeClient.getAllEmployees();
@@ -139,19 +141,19 @@ class EmployeeClientIntegrationTest {
   void getEmployeeById_returnsEmployee() {
     String jsonBody =
         """
-            {
-              "status": "success",
-              "data": {
-                "id": "11111111-1111-1111-1111-111111111111",
-                "employee_name": "John",
-                "employee_salary": 8000,
-                "employee_age": 30,
-                "employee_title": "Engineer",
-                "employee_email": "john@company.com"
-              },
-              "error": null
-            }
-            """;
+                        {
+                          "status": "success",
+                          "data": {
+                            "id": "11111111-1111-1111-1111-111111111111",
+                            "employee_name": "John",
+                            "employee_salary": 8000,
+                            "employee_age": 30,
+                            "employee_title": "Engineer",
+                            "employee_email": "john@company.com"
+                          },
+                          "error": null
+                        }
+                        """;
 
     mockServer.enqueue(
         new MockResponse()
@@ -174,8 +176,8 @@ class EmployeeClientIntegrationTest {
             .setResponseCode(404)
             .setBody(
                 """
-                    {"status":"error","data":null,"error":"Not found"}
-                    """)
+                                        {"status":"error","data":null,"error":"Not found"}
+                                        """)
             .addHeader("Content-Type", "application/json"));
 
     Optional<Employee> emp = employeeClient.getEmployeeById("nonexistent-id");
@@ -201,18 +203,18 @@ class EmployeeClientIntegrationTest {
             .setResponseCode(200)
             .setBody(
                 """
-                    {
-                      "status":"success",
-                      "data":{
-                        "id":"11111111-1111-1111-1111-111111111111",
-                        "employee_name":"Recovered",
-                        "employee_salary":5000,
-                        "employee_age":28,
-                        "employee_title":"Dev",
-                        "employee_email":"recovered@company.com"
-                      }
-                    }
-                    """)
+                                        {
+                                          "status":"success",
+                                          "data":{
+                                            "id":"11111111-1111-1111-1111-111111111111",
+                                            "employee_name":"Recovered",
+                                            "employee_salary":5000,
+                                            "employee_age":28,
+                                            "employee_title":"Dev",
+                                            "employee_email":"recovered@company.com"
+                                          }
+                                        }
+                                        """)
             .addHeader("Content-Type", "application/json"));
 
     Optional<Employee> emp = employeeClient.getEmployeeById("11111111-1111-1111-1111-111111111111");
@@ -225,22 +227,56 @@ class EmployeeClientIntegrationTest {
   }
 
   @Test
+  void getAllEmployees_handlesEmptyResponse() {
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setBody(
+                """
+                                {"data":[],"status":"success"}
+                                """)
+            .addHeader("Content-Type", "application/json"));
+
+    List<Employee> employees = employeeClient.getAllEmployees();
+
+    assertNotNull(employees);
+    assertTrue(employees.isEmpty(), "Should return empty list for no employees");
+  }
+
+  @Test
+  void getAllEmployees_handlesNullData() {
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setBody(
+                """
+                                        {"data":null,"status":"success"}
+                                        """)
+            .addHeader("Content-Type", "application/json"));
+
+    List<Employee> employees = employeeClient.getAllEmployees();
+
+    assertNotNull(employees);
+    assertTrue(employees.isEmpty(), "Should return empty list for null data");
+  }
+
+  @Test
   void createEmployee_createsSuccessfully() throws Exception {
     String jsonResponse =
         """
-            {
-              "status":"success",
-              "data":{
-                "id":"11111111-1111-1111-1111-111111111111",
-                "employee_name":"Bob",
-                "employee_salary":7000,
-                "employee_age":25,
-                "employee_title":"Intern",
-                "employee_email":"bob@company.com"
-              },
-              "error":null
-            }
-            """;
+                        {
+                          "status":"success",
+                          "data":{
+                            "id":"11111111-1111-1111-1111-111111111111",
+                            "employee_name":"Bob",
+                            "employee_salary":7000,
+                            "employee_age":25,
+                            "employee_title":"Intern",
+                            "employee_email":"bob@company.com"
+                          },
+                          "error":null
+                        }
+                        """;
 
     mockServer.enqueue(
         new MockResponse()
@@ -275,14 +311,120 @@ class EmployeeClientIntegrationTest {
   }
 
   @Test
+  void createEmployee_handles400BadRequest() {
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(400)
+            .setBody(
+                """
+                                        {"status":"error","data":null,"error":"Invalid input"}
+                                        """)
+            .addHeader("Content-Type", "application/json"));
+
+    CreateEmployeeInput input = new CreateEmployeeInput();
+    input.setName("Bob");
+    input.setSalary(7000);
+    input.setAge(25);
+    input.setTitle("Intern");
+
+    Optional<Employee> result = employeeClient.createEmployee(input);
+
+    assertTrue(result.isEmpty(), "Should return empty Optional for 400 error");
+  }
+
+  @Test
+  void createEmployee_retriesOn503() {
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(503)
+            .setBody(
+                """
+                                        {"status":"error","error":"Service unavailable"}
+                                        """)
+            .addHeader("Content-Type", "application/json"));
+
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(201)
+            .setBody(
+                """
+                                        {
+                                          "status":"success",
+                                          "data":{
+                                            "id":"22222222-2222-2222-2222-222222222222",
+                                            "employee_name":"Bob",
+                                            "employee_salary":7000,
+                                            "employee_age":25,
+                                            "employee_title":"Intern",
+                                            "employee_email":"bob@company.com"
+                                          }
+                                        }
+                                        """)
+            .addHeader("Content-Type", "application/json"));
+
+    CreateEmployeeInput input = new CreateEmployeeInput();
+    input.setName("Bob");
+    input.setSalary(7000);
+    input.setAge(25);
+    input.setTitle("Intern");
+
+    Optional<Employee> result = employeeClient.createEmployee(input);
+
+    assertTrue(result.isPresent(), "Should succeed after retry");
+    assertEquals("Bob", result.get().getEmployeeName());
+    assertTrue(mockServer.getRequestCount() >= 2, "Should have retried");
+  }
+
+  @Test
+  void createEmployee_handlesNullResponseData() {
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(201)
+            .setBody(
+                """
+                                {"status":"success","data":null}
+                                """)
+            .addHeader("Content-Type", "application/json"));
+
+    CreateEmployeeInput input = new CreateEmployeeInput();
+    input.setName("Bob");
+    input.setSalary(7000);
+    input.setAge(25);
+    input.setTitle("Intern");
+
+    Optional<Employee> result = employeeClient.createEmployee(input);
+
+    assertTrue(result.isEmpty(), "Should return empty Optional when data is null");
+  }
+
+  @Test
+  void createEmployee_handlesGenericException() throws Exception {
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setBody("invalid json{{{") // Malformed JSON
+            .addHeader("Content-Type", "application/json"));
+
+    CreateEmployeeInput input = new CreateEmployeeInput();
+    input.setName("Bob");
+    input.setSalary(7000);
+    input.setAge(25);
+    input.setTitle("Intern");
+
+    Optional<Employee> result = employeeClient.createEmployee(input);
+
+    assertTrue(result.isEmpty(), "Should return empty Optional on parse error");
+  }
+
+  @Test
   void deleteEmployeeByName_deletesSuccessfully() {
     mockServer.enqueue(
         new MockResponse()
             .setResponseCode(200)
             .setBody(
                 """
-                    {"status":"success","data":true}
-                    """)
+                                        {"status":"success","data":true}
+                                        """)
             .addHeader("Content-Type", "application/json"));
 
     boolean deleted = employeeClient.deleteEmployeeByName("John Doe");
@@ -297,8 +439,8 @@ class EmployeeClientIntegrationTest {
             .setResponseCode(404)
             .setBody(
                 """
-                    {"status":"error","data":null,"error":"Not found"}
-                    """)
+                                        {"status":"error","data":null,"error":"Not found"}
+                                        """)
             .addHeader("Content-Type", "application/json"));
 
     boolean deleted = employeeClient.deleteEmployeeByName("NonExistent");
@@ -307,35 +449,251 @@ class EmployeeClientIntegrationTest {
   }
 
   @Test
-  void getAllEmployees_handlesEmptyResponse() {
+  void deleteEmployee_handles404NotFound() {
     mockServer.enqueue(
         new MockResponse()
-            .setResponseCode(200)
-            .setBody("""
-                    {"data":[],"status":"success"}
-                    """)
+            .setResponseCode(404)
+            .setBody(
+                """
+                                {"status":"error","error":"Not found"}
+                                """)
             .addHeader("Content-Type", "application/json"));
 
-    List<Employee> employees = employeeClient.getAllEmployees();
+    boolean result = employeeClient.deleteEmployee("11111111-1111-1111-1111-111111111111");
 
-    assertNotNull(employees);
-    assertTrue(employees.isEmpty(), "Should return empty list for no employees");
+    assertFalse(result, "Should return false for 404");
   }
 
   @Test
-  void getAllEmployees_handlesNullData() {
+  void deleteEmployee_handlesNullId() {
+    boolean result = employeeClient.deleteEmployee(null);
+
+    assertFalse(result, "Should return false for null ID");
+    assertEquals(0, mockServer.getRequestCount(), "Should not make any request");
+  }
+
+  @Test
+  void deleteEmployee_handlesBlankId() {
+    boolean result = employeeClient.deleteEmployee("   ");
+
+    assertFalse(result, "Should return false for blank ID");
+    assertEquals(0, mockServer.getRequestCount(), "Should not make any request");
+  }
+
+  @Test
+  void deleteEmployee_retriesOn503() {
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(503)
+            .setBody(
+                """
+                                        {"status":"error","error":"Service unavailable"}
+                                        """)
+            .addHeader("Content-Type", "application/json"));
+
+    mockServer.enqueue(
+        new MockResponse().setResponseCode(204).addHeader("Content-Type", "application/json"));
+
+    boolean result = employeeClient.deleteEmployee("11111111-1111-1111-1111-111111111111");
+
+    assertTrue(result, "Should succeed after retry");
+    assertTrue(mockServer.getRequestCount() >= 2, "Should have retried");
+  }
+
+  @Test
+  void deleteEmployee_handles500ServerError() {
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(500)
+            .setBody(
+                """
+                                        {"status":"error","error":"Internal server error"}
+                                        """)
+            .addHeader("Content-Type", "application/json"));
+
+    boolean result = employeeClient.deleteEmployee("11111111-1111-1111-1111-111111111111");
+
+    assertFalse(result, "Should return false for 500 error");
+  }
+
+  @Test
+  void deleteEmployee_handles400BadRequest() {
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(400)
+            .setBody(
+                """
+                                {"status":"error","error":"Bad request"}
+                                """)
+            .addHeader("Content-Type", "application/json"));
+
+    boolean result = employeeClient.deleteEmployee("11111111-1111-1111-1111-111111111111");
+
+    assertFalse(result, "Should return false for 400 error");
+  }
+
+  @Test
+  void deleteEmployee_handlesConnectionException() {
+    mockServer.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+
+    boolean result = employeeClient.deleteEmployee("11111111-1111-1111-1111-111111111111");
+
+    assertFalse(result, "Should return false on connection exception");
+  }
+
+  @Test
+  void deleteEmployeeByName_handlesNullName() {
+    boolean result = employeeClient.deleteEmployeeByName(null);
+
+    assertFalse(result, "Should return false for null name");
+    assertEquals(0, mockServer.getRequestCount(), "Should not make any request");
+  }
+
+  @Test
+  void deleteEmployeeByName_handlesBlankName() {
+    boolean result = employeeClient.deleteEmployeeByName("   ");
+
+    assertFalse(result, "Should return false for blank name");
+    assertEquals(0, mockServer.getRequestCount(), "Should not make any request");
+  }
+
+  @Test
+  void deleteEmployeeByName_retriesOn429() {
+    // rate limited
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(429)
+            .setBody(
+                """
+                                        {"status":"error","error":"Too many requests"}
+                                        """)
+            .addHeader("Content-Type", "application/json"));
+
     mockServer.enqueue(
         new MockResponse()
             .setResponseCode(200)
             .setBody(
                 """
-                    {"data":null,"status":"success"}
-                    """)
+                                {"status":"success","data":true}
+                                """)
             .addHeader("Content-Type", "application/json"));
 
-    List<Employee> employees = employeeClient.getAllEmployees();
+    boolean result = employeeClient.deleteEmployeeByName("John Doe");
 
-    assertNotNull(employees);
-    assertTrue(employees.isEmpty(), "Should return empty list for null data");
+    assertTrue(result, "Should succeed after retry");
+    assertTrue(mockServer.getRequestCount() >= 2, "Should have retried");
+  }
+
+  @Test
+  void deleteEmployeeByName_handlesNullResponseData() {
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setBody(
+                """
+                                {"status":"success","data":null}
+                                """)
+            .addHeader("Content-Type", "application/json"));
+
+    boolean result = employeeClient.deleteEmployeeByName("John Doe");
+
+    assertFalse(result, "Should return false when data is null");
+  }
+
+  @Test
+  void deleteEmployeeByName_handlesFalseResponse() {
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setBody(
+                """
+                                {"status":"success","data":false}
+                                """)
+            .addHeader("Content-Type", "application/json"));
+
+    boolean result = employeeClient.deleteEmployeeByName("John Doe");
+
+    assertFalse(result, "Should return false when server returns false");
+  }
+
+  @Test
+  void deleteEmployeeByName_handles502BadGateway() {
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(502)
+            .setBody(
+                """
+                                {"status":"error","error":"Bad gateway"}
+                                """)
+            .addHeader("Content-Type", "application/json"));
+
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setBody(
+                """
+                                {"status":"success","data":true}
+                                """)
+            .addHeader("Content-Type", "application/json"));
+
+    boolean result = employeeClient.deleteEmployeeByName("John Doe");
+
+    assertTrue(result, "Should succeed after retry on transient 502 error");
+  }
+
+  @Test
+  void deleteEmployeeByName_handlesGenericException() {
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setBody("invalid json{")
+            .addHeader("Content-Type", "application/json"));
+
+    boolean result = employeeClient.deleteEmployeeByName("John Doe");
+
+    assertFalse(result, "Should return false on parse error");
+  }
+
+  @Test
+  void getEmployeeById_handlesUnknownStatusCode() {
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(418) // unknown status
+            .setBody(
+                """
+                                {"status":"error","error":"I'm a teapot"}
+                                """)
+            .addHeader("Content-Type", "application/json"));
+
+    Optional<Employee> result =
+        employeeClient.getEmployeeById("11111111-1111-1111-1111-111111111111");
+
+    assertTrue(result.isEmpty(), "Should handle unknown status codes gracefully");
+  }
+
+  @Test
+  void getAllEmployees_handles504GatewayTimeout() {
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(504)
+            .setBody(
+                """
+                                        {"status":"error","error":"Gateway timeout"}
+                                        """)
+            .addHeader("Content-Type", "application/json"));
+
+    mockServer.enqueue(
+        new MockResponse()
+            .setResponseCode(200)
+            .setBody(
+                """
+                                {"data":[],"status":"success"}
+                                """)
+            .addHeader("Content-Type", "application/json"));
+
+    List<Employee> result = employeeClient.getAllEmployees();
+
+    assertNotNull(result);
+    assertTrue(mockServer.getRequestCount() >= 2, "Should retry on 504");
   }
 }

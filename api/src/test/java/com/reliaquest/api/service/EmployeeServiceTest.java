@@ -2,6 +2,7 @@ package com.reliaquest.api.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 import com.reliaquest.api.client.EmployeeClient;
@@ -13,6 +14,8 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -129,7 +132,80 @@ class EmployeeServiceTest {
 
     // Should still use cache (not invalidated)
     employeeService.getAllEmployees();
-    verify(employeeClient, times(1)).getAllEmployees(); // Still only 1 call
+    verify(employeeClient, times(1)).getAllEmployees();
+  }
+
+  @Test
+  void testDeleteEmployeeByIdOrName_nullInput() {
+    Optional<String> result = employeeService.deleteEmployeeByIdOrName(null);
+    assertTrue(result.isEmpty());
+  }
+
+  @Test
+  void testGetTopTenHighestEarningNames_basic() {
+    List<Employee> mockList =
+        IntStream.range(1, 20)
+            .mapToObj(
+                i ->
+                    new Employee(
+                        UUID.randomUUID(),
+                        "employee:" + i,
+                        i * 1000,
+                        20 + i,
+                        "title: ",
+                        "email@company.com"))
+            .collect(Collectors.toList());
+
+    when(employeeClient.getAllEmployees()).thenReturn(mockList);
+
+    List<String> topTen = employeeService.getTopTenHighestEarningNames();
+    assertEquals(10, topTen.size());
+    assertEquals("employee:19", topTen.get(0));
+  }
+
+  @Test
+  void testDeleteEmployeeByIdOrName_uuidFound() {
+    UUID uuid = UUID.randomUUID();
+    Employee mockEmployee = new Employee(uuid, "John Doe", 1000, 30, "Dev", "jdoe@company.com");
+
+    when(employeeClient.getEmployeeById(uuid.toString())).thenReturn(Optional.of(mockEmployee));
+    when(employeeClient.deleteEmployeeByName("John Doe")).thenReturn(true);
+
+    Optional<String> result = employeeService.deleteEmployeeByIdOrName(uuid.toString());
+
+    assertTrue(result.isPresent());
+    assertEquals("John Doe", result.get());
+  }
+
+  @Test
+  void testDeleteEmployeeByIdOrName_uuidNotFound() {
+    UUID uuid = UUID.randomUUID();
+
+    when(employeeClient.getEmployeeById(uuid.toString())).thenReturn(Optional.empty());
+
+    Optional<String> result = employeeService.deleteEmployeeByIdOrName(uuid.toString());
+
+    assertTrue(result.isEmpty());
+    verify(employeeClient, never()).deleteEmployeeByName(any());
+  }
+
+  @Test
+  void testDeleteEmployeeByIdOrName_plainName() {
+    when(employeeClient.deleteEmployeeByName("Jane")).thenReturn(true);
+
+    Optional<String> result = employeeService.deleteEmployeeByIdOrName("Jane");
+
+    assertTrue(result.isPresent());
+    assertEquals("Jane", result.get());
+  }
+
+  @Test
+  void testDeleteEmployeeByIdOrName_notFound() {
+    when(employeeClient.deleteEmployeeByName("NonExistent")).thenReturn(false);
+
+    Optional<String> result = employeeService.deleteEmployeeByIdOrName("NonExistent");
+
+    assertTrue(result.isEmpty());
   }
 
   @Test

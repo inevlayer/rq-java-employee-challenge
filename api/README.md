@@ -63,3 +63,22 @@ Please include proper integration and/or unit tests.
 - `api/` - Client implementation for Employee API
     - See [design-decisions.md](api/design-decisions.md) for architectural choices
 - `server/` - Mock server for testing (do not modify)
+
+## API Quality Assurance & Code Coverage
+# Run tests with coverage
+`./gradlew api:test`
+
+### View coverage report
+open api/build/reports/jacoco/test/html/index.html
+
+### Run Static Analysis via SpotBugs
+`./gradlew api:spotbugsMain`
+
+### View SpotBugs report
+open api/build/reports/spotbugs/main/spotbugs.html
+
+### Run tests with coverage report:
+`./gradlew api:test jacocoTestReport`
+
+### Run everything together
+`./gradlew api:check`
