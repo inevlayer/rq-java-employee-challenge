@@ -55,3 +55,11 @@ deleteEmployeeById(...)
 
 ### Testing
 Please include proper integration and/or unit tests.
+
+# Employee Management API Implementation
+
+## Project Structure
+
+- `api/` - Client implementation for Employee API
+    - See [design-decisions.md](api/design-decisions.md) for architectural choices
+- `server/` - Mock server for testing (do not modify)
